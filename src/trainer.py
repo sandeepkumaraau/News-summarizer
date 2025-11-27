@@ -1,7 +1,6 @@
 import torch
 from tqdm import tqdm
 from .utils import postprocess_text
-from .config import Config
 
 
 def train_one_epoch(model, train_loader, optimizer, scheduler, device):
@@ -23,6 +22,8 @@ def train_one_epoch(model, train_loader, optimizer, scheduler, device):
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
         optimizer.step()
         scheduler.step()  # Scheduler stepping every batch
+
+        torch.mps.empty_cache()
 
         total_loss += loss.item()
         num_batches += 1

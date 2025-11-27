@@ -1,4 +1,10 @@
+## MacOS Shenanigans
+import ssl
 import nltk
+
+## To avoid SSL certificate verification issues on MacOS
+
+
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, get_scheduler, Adafactor
 from evaluate import load
 
@@ -7,7 +13,16 @@ from src import Config, get_dataloaders, train_one_epoch, evaluate, plot_metrics
 
 def main():
     # Setup
-    nltk.download("punkt")
+
+    # MacOS Shenanigans
+    try:
+        _create_unverified_https_context = ssl._create_unverified_context
+    except AttributeError:
+        pass
+    else:
+        ssl._create_default_https_context = _create_unverified_https_context
+    nltk.download("punkt_tab")
+
     print(f"Using device: {Config.DEVICE}")
 
     # Model & Tokenizer
