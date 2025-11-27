@@ -21,7 +21,7 @@ def main():
         pass
     else:
         ssl._create_default_https_context = _create_unverified_https_context
-    nltk.download("punkt")
+    nltk.download("punkt_tab")
 
     print(f"Using device: {Config.DEVICE}")
 
