@@ -1,4 +1,3 @@
-import torch
 import nltk
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, get_scheduler, Adafactor
 from evaluate import load
@@ -51,17 +50,13 @@ def main():
 
         train_losses.append(t_loss)
         val_losses.append(v_loss)
-
-        # Safely handle cases where evaluate() returned None or a non-dict result
-        if isinstance(rouge, dict):
-            rouge_scores["rouge1"].append(rouge.get("rouge1", 0.0))
-            rouge_scores["rouge2"].append(rouge.get("rouge2", 0.0))
-            rouge_scores["rougeL"].append(rouge.get("rougeL", 0.0))
+        if rouge:
+            rouge_scores["rouge1"].append(rouge["rouge1"])
+            rouge_scores["rouge2"].append(rouge["rouge2"])
+            rouge_scores["rougeL"].append(rouge["rougeL"])
+            print("ROUGE scores:", rouge)
         else:
-            # append None placeholders (or use 0.0) to keep lists aligned with epochs
-            rouge_scores["rouge1"].append(None)
-            rouge_scores["rouge2"].append(None)
-            rouge_scores["rougeL"].append(None)
+            print("ROUGE scores not available for this epoch.")
 
         print(f"Train Loss: {t_loss:.4f} | Val Loss: {v_loss:.4f}")
         print(f"ROUGE: {rouge}")
@@ -69,7 +64,7 @@ def main():
     # Save & Plot
     model.save_pretrained("outputs/models/final_model")
     tokenizer.save_pretrained("outputs/models/final_model")
-    plot_metrics(train_losses, val_losses, [])
+    plot_metrics(train_losses, val_losses, rouge_scores)
 
 
 if __name__ == "__main__":
