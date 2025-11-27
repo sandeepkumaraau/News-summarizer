@@ -4,7 +4,7 @@ from .utils import postprocess_text
 from .config import Config
 
 
-def train_one_epoch(model, train_loader, optimizer, scheduler, device, scaler):
+def train_one_epoch(model, train_loader, optimizer, scheduler, device):
     model.train()
     total_loss = 0.0
     num_batches = 0
@@ -16,15 +16,12 @@ def train_one_epoch(model, train_loader, optimizer, scheduler, device, scaler):
         batch = {k: v.to(device) for k, v in batch.items()}
         optimizer.zero_grad()
 
-        with torch.autocast(device_type=Config.DEVICE.type, enabled=True):
-            outputs = model(**batch)
-            loss = outputs.loss
+        outputs = model(**batch)
+        loss = outputs.loss
 
-        scaler.scale(loss).backward()
-        scaler.unscale_(optimizer)
+        loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-        scaler.step(optimizer)
-        scaler.update()
+        optimizer.step()
         scheduler.step()  # Scheduler stepping every batch
 
         total_loss += loss.item()
@@ -57,21 +54,18 @@ def evaluate(model, loader, device, tokenizer, rouge_metric):
                 num_beams=4,
                 early_stopping=True,
             )
+
             decoded_preds = tokenizer.batch_decode(
-                generated_ids,
-                skip_special_tokens=True,
-                clean_up_tokenization_spaces=True,
+                generated_ids, skip_special_tokens=True
             )
-            label_fixed = torch.where(
-                batch["labels"] == -100, tokenizer.pad_token_id, batch["labels"]
-            )
-            decoded_labels = tokenizer.batch_decode(
-                label_fixed, skip_special_tokens=True, clean_up_tokenization_spaces=True
-            )
+
+            labels = batch["labels"]
+            labels = torch.where(labels == -100, tokenizer.pad_token_id, labels)
+            decoded_labels = tokenizer.batch_decode(labels, skip_special_tokens=True)
+
             decoded_preds, decoded_labels = postprocess_text(
                 decoded_preds, decoded_labels
             )
-
             all_preds.extend(decoded_preds)
             all_labels.extend(decoded_labels)
 
