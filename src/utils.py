@@ -66,3 +66,18 @@ def plot_metrics(
             plt.savefig(os.path.join(output_dir, "rouge_plot.png"))
         plt.show()
         plt.close()
+
+
+def duplicate_sentence_ratio(text):
+    """Calculates the ratio of duplicate sentences in the text."""
+    sentences = nltk.sent_tokenize(text)
+    if not sentences:
+        return 0
+    unique = len(set(sentences))
+    return 1 - (unique / len(sentences))
+
+
+def special_char_frequency(text, pattern=r"[!@#$%^&*]"):
+    """Calculates frequency of special characters."""
+    matches = re.findall(pattern, text)
+    return len(matches) / len(text) if len(text) > 0 else 0
